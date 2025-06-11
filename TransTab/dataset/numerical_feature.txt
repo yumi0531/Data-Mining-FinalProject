@@ -1,0 +1,6 @@
+Temperature
+Humidity
+Moisture
+Nitrogen
+Potassium
+Phosphorous
