@@ -1,1 +1,4 @@
-TransTab/checkpoint/
+__pycache__/
+checkpoint/
+example/transtab/
+rewrite/transtab/
