@@ -61,7 +61,7 @@ class GatedTransformerEncoder(nn.Module):
                 dim_feedforward=ffn_dim,
                 dropout=hidden_dropout_prob,
             )
-            self.encoders.append(nn.TransformerEncoder(encoder_layer, num_layer - 1))
+            self.encoders.append(nn.TransformerEncoder(encoder_layer, num_layer - 1, enable_nested_tensor=False))
 
     def forward(self, embedding, attention_mask):
         for encoder in self.encoders:
@@ -103,7 +103,7 @@ class BaseModel(nn.Module):
         return embedding
 
 class Classifier(nn.Module):
-    def __init__(self, categorical_features, numerical_features, binary_features, num_class=2, hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0, ffn_dim=256):
+    def __init__(self, categorical_features, numerical_features, binary_features=[], num_class=2, hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0, ffn_dim=256):
         super().__init__()
         self.base_model = BaseModel(categorical_features, numerical_features, binary_features, hidden_dim, num_layer, num_attention_head, hidden_dropout_prob, ffn_dim)
         self.classifier = nn.Sequential(
@@ -130,22 +130,16 @@ class Classifier(nn.Module):
         #     loss = self.loss_fn(logits, y_ts)
 
 if __name__ == '__main__':
-    import sys
-    sys.path.append('..')
+    from load_data import load_data
 
-    import transtab
+    torch.manual_seed(42)
 
-    transtab.random_seed(42)
+    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
 
-    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, binary_features = transtab.load_data('../dataset')
-    print('########################################')
     x = valid_dataset[0]
 
-    model = Classifier(
-        categorical_features, numerical_features, binary_features, num_class=7,
-        hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0, ffn_dim=256
-    ).cuda()
-    print('########################################')
+    model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
+
     with torch.no_grad():
         predict = model(x)
     print(f'{tuple(x.shape)} --{model.__class__.__name__}-> {tuple(predict.shape)}')

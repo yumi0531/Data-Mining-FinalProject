@@ -1,4 +1,3 @@
-import os
 import torch
 
 from torch import nn
@@ -6,13 +5,11 @@ from transformers import BertTokenizerFast
 
 # 將特徵及類別轉換為token
 class FeatureExtractor(nn.Module):
-    def __init__(self, categorical_features, numerical_features, binary_features, disable_tokenizer_parallel=False):
+    def __init__(self, categorical_features, numerical_features, binary_features=[]):
         super().__init__()
         self.tokenizer = BertTokenizerFast.from_pretrained('../transtab/tokenizer')
         self.vocab_size = self.tokenizer.vocab_size
         self.pad_token_id = self.tokenizer.pad_token_id
-        if disable_tokenizer_parallel:
-            os.environ['TOKENIZERS_PARALLELISM'] = 'false'
         self.categorical_features = categorical_features
         self.numerical_features = numerical_features
         self.binary_features = binary_features
@@ -59,21 +56,17 @@ class FeatureExtractor(nn.Module):
         return encoded_inputs
 
 if __name__ == '__main__':
-    import sys
-    sys.path.append('..')
+    from load_data import load_data
 
-    import transtab
+    torch.manual_seed(42)
 
-    transtab.random_seed(42)
-
-    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, binary_features = transtab.load_data('../dataset')
-    print('########################################')
+    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
 
     tokenizer = BertTokenizerFast.from_pretrained('../transtab/tokenizer')
 
     x = valid_dataset[0]
-    x['high'] = (x['temperature'] > 0.5).astype(int)
-    binary_features = ['high']
+    x['High'] = (x['Temperature'] > 0.5).astype(int)
+    binary_features = ['High']
 
     x_cat = x[categorical_features].astype(str)
     x_mask = (~x_cat.isna()).astype(int)
@@ -109,7 +102,7 @@ if __name__ == '__main__':
     print(x_cat_ts['attention_mask'])
     print(f'shape: {tuple(x_cat_ts["attention_mask"].shape)}')
 
-    print('########################################')
+    print('════════════════════════════════════════')
 
     num_col_ts = tokenizer(numerical_features, padding=True, truncation=True, add_special_tokens=False, return_tensors='pt')
 
@@ -133,7 +126,7 @@ if __name__ == '__main__':
     print(num_col_ts['attention_mask'])
     print(f'shape: {tuple(num_col_ts["attention_mask"].shape)}')
 
-    print('########################################')
+    print('════════════════════════════════════════')
 
     x_bin = x[binary_features]
     x_bin_str = x_bin.apply(lambda x: x.name) * x_bin
@@ -168,7 +161,7 @@ if __name__ == '__main__':
     print(x_bin_ts['attention_mask'])
     print(f'shape: {tuple(x_bin_ts["attention_mask"].shape)}')
 
-    print('########################################')
+    print('════════════════════════════════════════')
 
     feature_extractor = FeatureExtractor(categorical_features, numerical_features, binary_features)
     encoded_inputs = feature_extractor(x)

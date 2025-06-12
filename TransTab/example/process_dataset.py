@@ -1,7 +1,7 @@
 import os
 import pandas
 
-data = pandas.read_csv('playground-series-s5e6/train.csv')
+data = pandas.read_csv('../playground-series-s5e6/train.csv')
 
 data = data.rename(columns={
     'Temparature': 'Temperature',

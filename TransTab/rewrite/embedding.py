@@ -33,21 +33,16 @@ class NumEmbedding(nn.Module):
         return feature_embedding * num.unsqueeze(-1).float() + self.bias
 
 if __name__ == '__main__':
-    import sys
-    sys.path.append('..')
-
-    import transtab
-
     from feature_extractor import FeatureExtractor
+    from load_data import load_data
 
-    transtab.random_seed(42)
+    torch.manual_seed(42)
 
-    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, binary_features = transtab.load_data('../dataset')
-    print('########################################')
+    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
 
     x = valid_dataset[0]
 
-    feature_extractor = FeatureExtractor(categorical_features, numerical_features, binary_features)
+    feature_extractor = FeatureExtractor(categorical_features, numerical_features)
     encoded_inputs = feature_extractor(x)
     cat_input_ids = encoded_inputs['x_cat_input_ids']
 

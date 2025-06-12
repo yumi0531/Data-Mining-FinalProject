@@ -5,7 +5,7 @@ import transtab
 
 transtab.random_seed(42)
 
-dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, binary_features = transtab.load_data('../dataset')
+dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, binary_features = transtab.load_data('dataset')
 print('########################################')
 
 model = transtab.build_classifier(categorical_features, numerical_features, binary_features, num_class=7)
@@ -19,6 +19,6 @@ transtab.train(
     batch_size=512,
     lr=1e-4,
     eval_metric='val_loss',
-    output_dir='../checkpoint',
+    output_dir='checkpoint',
     eval_less_is_better=True
 )
