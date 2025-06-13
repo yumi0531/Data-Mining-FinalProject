@@ -5,7 +5,7 @@ import transtab
 
 transtab.random_seed(42)
 
-dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, binary_features = transtab.load_data('dataset')
+dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, binary_features = transtab.load_data('dataset', seed=42)
 print('########################################')
 
 model = transtab.build_classifier(categorical_features, numerical_features, binary_features, num_class=7)
