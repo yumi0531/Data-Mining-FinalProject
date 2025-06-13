@@ -17,14 +17,14 @@ def train_epoch(model, loader, epoch, loss_fn, optimizer):
         batch_size = len(x)
 
         logits = model(x)
-        loss = loss_fn(logits, y)
+        loss = loss_fn(logits, y.cuda())
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         losses += loss.item() * batch_size
-        predicts = logits.detach().argmax(-1)
+        predicts = logits.detach().cpu().argmax(-1)
         accuracy = accuracy_score(y, predicts)
         accuracies += accuracy * batch_size
     
@@ -44,10 +44,10 @@ def valid_epoch(model, loader, epoch, loss_fn):
 
         with torch.no_grad():
             logits = model(x)
-            loss = loss_fn(logits, y)
+            loss = loss_fn(logits, y.cuda())
 
         losses += loss.item() * batch_size
-        predicts = logits.argmax(-1)
+        predicts = logits.cpu().argmax(-1)
         accuracy = accuracy_score(y, predicts)
         accuracies += accuracy * batch_size
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     import os
 
     from dataset import get_loader
-    from early_stopping import MaximizeEarlyStopping
+    from early_stopping import MinimizeEarlyStopping
     from load_data import load_data
     from matplotlib import pyplot
     from model import Classifier
@@ -68,32 +68,36 @@ if __name__ == '__main__':
 
     torch.manual_seed(42)
 
+    train_batch_size = 256
+    valid_batch_size = 256
+    output_folder = 'checkpoint'
+    epochs = 10
+    learning_rate = 1e-4
+    weight_decay=0
+
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
 
-    model = Classifier(categorical_features, numerical_features, num_class=7)
-
-    x, y = valid_dataset
+    model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
 
     # use only the first and last 500 rows for fast testing
-    xx = x.head(500)
-    xy = y.head(500)
-    yx = x.tail(500)
-    yy = y.tail(500)
+    # x, y = valid_dataset
+    # train_x = x.head(500)
+    # train_y = y.head(500)
+    # valid_x = x.tail(500)
+    # valid_y = y.tail(500)
 
-    train_dataset = (xx, xy)
-    valid_dataset = (yx, yy)
+    # train_dataset = (train_x, train_y)
+    # valid_dataset = (valid_x, valid_y)
 
     train_loader = get_loader(train_dataset, batch_size=256)
     valid_loader = get_loader(valid_dataset, batch_size=256, shuffle=False)
 
-    output_folder = 'checkpoint'
     os.makedirs(output_folder, exist_ok=True)
 
-    epochs = 10
-    early_stopping = MaximizeEarlyStopping(epochs, patience=5, output_dir=output_folder)
+    early_stopping = MinimizeEarlyStopping(epochs, patience=5, output_dir=output_folder)
 
-    optimizer = get_optimizer(model, learning_rate=1e-4, weight_decay=1e-3)
-    loss_fn = nn.CrossEntropyLoss()
+    optimizer = get_optimizer(model, learning_rate=learning_rate, weight_decay=weight_decay)
+    loss_fn = nn.CrossEntropyLoss().cuda()
 
     train_losses = []
     valid_losses = []
@@ -110,7 +114,7 @@ if __name__ == '__main__':
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
 
-        early_stopping.update(model, valid_accuracy)
+        early_stopping.update(model, valid_loss)
 
     torch.save(model.state_dict(), f'{output_folder}/final.pt')
     torch.save(optimizer.state_dict(), f'{output_folder}/optimizer.pt')

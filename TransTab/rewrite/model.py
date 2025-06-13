@@ -6,7 +6,6 @@ from feature_processor import FeatureProcessor
 from torch import nn
 
 class GatedTransformerEncoderLayer(nn.Module):
-    __constants__ = ['batch_first', 'norm_first']
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, layer_norm_eps=1e-5):
         super().__init__()
         self.self_attn = nn.MultiheadAttention(d_model, nhead, batch_first=True)

@@ -16,12 +16,10 @@ def evaluate(model, loader):
     for x, y in tqdm(loader):
         with torch.no_grad():
             logits = model(x)
-        
-        predict = logits.argmax(-1)
-        
+
         ys.append(y)
-        predicts.append(predict)
-    
+        predicts.append(logits)
+
     ys = torch.cat(ys, dim=0)
     predicts = torch.cat(predicts, dim=0)
     return ys, predicts
@@ -46,6 +44,17 @@ def plot_confusion_matrix(ys, predicts, labels, output_folder='checkpoint'):
     pyplot.tight_layout()
     pyplot.savefig(f'{output_folder}/confusion.png')
 
+def map_k(ys, predicts, k=3):
+    labels = predicts.topk(k, dim=-1).indices
+    map_k = 0
+    for y, labels in zip(ys, labels):
+        for index, label in enumerate(labels):
+            if y == label:
+                map_k += 1 / (index + 1)
+                break
+    map_k /= len(ys)
+    return map_k
+
 if __name__ == '__main__':
     from dataset import get_loader
     from load_data import load_data
@@ -56,7 +65,7 @@ if __name__ == '__main__':
 
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
 
-    model = Classifier(categorical_features, numerical_features, num_class=7)
+    model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
     state_dict = torch.load('checkpoint/best.pt', weights_only=True)
     model.load_state_dict(state_dict)
 
@@ -64,11 +73,16 @@ if __name__ == '__main__':
 
     ys, predicts = evaluate(model, loader)
 
+    map_3 = map_k(ys, predicts)
+
+    predicts = predicts.cpu().argmax(-1)
     accuracy = accuracy_score(ys, predicts)
     precision = precision_score(ys, predicts, average='macro', zero_division=0)
     recall = recall_score(ys, predicts, average='macro')
     f1 = f1_score(ys, predicts, average='macro')
     print('┌───────────┬────────┐')
+    print(f'│ MAP@3     │ {map_3*100:5.2f}% │')
+    print('├───────────┼────────┤')
     print(f'│ Accuracy  │ {accuracy*100:5.2f}% │')
     print(f'│ Precision │ {precision*100:5.2f}% │')
     print(f'│ Recall    │ {recall*100:5.2f}% │')

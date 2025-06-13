@@ -1,4 +1,3 @@
 __pycache__/
 checkpoint/
-example/transtab/
-rewrite/transtab/
+transtab/example/transtab/
