@@ -1,10 +1,9 @@
 import torch
 
-from torch import nn
 from transformers import BertTokenizerFast
 
 # 將特徵及類別轉換為token
-class FeatureExtractor(nn.Module):
+class FeatureExtractor:
     def __init__(self, categorical_features, numerical_features, binary_features=[]):
         super().__init__()
         self.tokenizer = BertTokenizerFast.from_pretrained('../transtab/tokenizer')
@@ -13,11 +12,8 @@ class FeatureExtractor(nn.Module):
         self.categorical_features = categorical_features
         self.numerical_features = numerical_features
         self.binary_features = binary_features
-        self.device_parameter = nn.Parameter(torch.empty(0))
 
-    def forward(self, x):
-        device = self.device_parameter.device
-
+    def __call__(self, x, device):
         encoded_inputs = {}
 
         if len(self.categorical_features) > 0:

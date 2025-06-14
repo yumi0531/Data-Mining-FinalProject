@@ -95,7 +95,8 @@ class BaseModel(nn.Module):
         self.encoder = GatedTransformerEncoder(hidden_dim, num_layer, num_attention_head, hidden_dropout_prob, ffn_dim)
 
     def forward(self, x):
-        tokenized = self.feature_extractor(x)
+        device = next(self.parameters()).device
+        tokenized = self.feature_extractor(x, device)
         embedding = self.feature_processor(**tokenized)
         embedding = self.cls_token(**embedding)
         embedding = self.encoder(**embedding)
