@@ -1,32 +1,28 @@
 import torch
+import pandas
 
-from torch import nn
-import pandas as pd
 from transformers import CLIPTokenizer, CLIPTextModel
 
 
 # 將特徵及類別轉換為token
-class CLIPFeatureExtractor(nn.Module):
+class CLIPFeatureExtractor:
 
     def __init__(self,
                  categorical_features,
                  numerical_features,
                  binary_features=[]):
-        super().__init__()
-
         # CLIP tokenizer & text encoder
         self.tokenizer = CLIPTokenizer.from_pretrained(
             "openai/clip-vit-base-patch32")
         self.text_encoder = CLIPTextModel.from_pretrained(
-            "openai/clip-vit-base-patch32")
+            "openai/clip-vit-base-patch32").eval()
 
         self.categorical_features = categorical_features
         self.numerical_features = numerical_features
         self.binary_features = binary_features
-        self.device_param = nn.Parameter(torch.empty(0))
 
-    def forward(self, x):
-        device = self.device_param.device
+    def __call__(self, x, device):
+        self.text_encoder.to(device)
         # change everything to natural language sentences
         sentence_list = []
 
@@ -35,11 +31,11 @@ class CLIPFeatureExtractor(nn.Module):
 
             parts = []
             for col in self.categorical_features:
-                val = str(row[col]) if pd.notna(row[col]) else "unknown"
+                val = str(row[col]) if pandas.notna(row[col]) else "unknown"
                 parts.append(f"{col.replace('_', ' ').lower()} is {val}")
 
             for col in self.numerical_features:
-                val = row[col] if pd.notna(row[col]) else 0.0
+                val = row[col] if pandas.notna(row[col]) else 0.0
                 parts.append(f"{col.replace('_', ' ').lower()} is {val:.2f}")
 
             for col in self.binary_features:
@@ -55,10 +51,9 @@ class CLIPFeatureExtractor(nn.Module):
                                 truncation=True,
                                 return_tensors="pt").to(device)
         with torch.no_grad():
-            embedding = self.text_encoder(
-                **tokens).last_hidden_state[:, 0, :]  # 取 [CLS] 表示
+            embedding = self.text_encoder(**tokens).last_hidden_state[:, 1:, :] # 取 [CLS] 表示
 
-        return embedding  # shape: [batch_size, 512]
+        return embedding  # shape: [batch_size, 58, 512]
 
 
 if __name__ == '__main__':
@@ -75,13 +70,13 @@ if __name__ == '__main__':
     feature_extractor = CLIPFeatureExtractor(categorical_features,
                                              numerical_features,
                                              binary_features)
-    embedding = feature_extractor(x)
+    embedding = feature_extractor(x.head(256), 'cuda')
 
     print('┌──────────────────┐')
     print('│ FeatureExtractor │')
     print('└──────────────────┘')
     print("{")
-    print(f"'embedding':")
+    print("'embedding':")
     print(embedding)
     print(f'shape: {tuple(embedding.shape)}')
     print("}")

@@ -26,9 +26,9 @@ if __name__ == '__main__':
 
     feature_extractor = CLIPFeatureExtractor(categorical_features,
                                              numerical_features)
-    encoded_inputs = feature_extractor(x)
+    encoded_inputs = feature_extractor(x.head(256), 'cuda')
 
-    processor = CLIPFeatureProcessor()
+    processor = CLIPFeatureProcessor().cuda()
     embeddings = processor(encoded_inputs)
 
     print('┌────────────┐')

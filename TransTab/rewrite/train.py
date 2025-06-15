@@ -62,7 +62,7 @@ if __name__ == '__main__':
     from early_stopping import MinimizeEarlyStopping
     from load_data import load_data
     from matplotlib import pyplot
-    from model import Classifier
+    from model_CLIP import CLIPClassifier
     from optimizer import get_optimizer
     from torch import nn
 
@@ -71,13 +71,15 @@ if __name__ == '__main__':
     train_batch_size = 256
     valid_batch_size = 256
     output_folder = 'checkpoint'
-    epochs = 10
+    epochs = 100
+    patience = 10
+    dropout = 0
     learning_rate = 1e-4
-    weight_decay=0
+    weight_decay = 0
 
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
 
-    model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
+    model = CLIPClassifier(categorical_features, numerical_features, num_class=7, hidden_dropout_prob=dropout).cuda()
 
     # use only the first and last 500 rows for fast testing
     # x, y = valid_dataset
@@ -89,12 +91,12 @@ if __name__ == '__main__':
     # train_dataset = (train_x, train_y)
     # valid_dataset = (valid_x, valid_y)
 
-    train_loader = get_loader(train_dataset, batch_size=256)
-    valid_loader = get_loader(valid_dataset, batch_size=256, shuffle=False)
+    train_loader = get_loader(train_dataset, batch_size=train_batch_size)
+    valid_loader = get_loader(valid_dataset, batch_size=valid_batch_size, shuffle=False)
 
     os.makedirs(output_folder, exist_ok=True)
 
-    early_stopping = MinimizeEarlyStopping(epochs, patience=5, output_dir=output_folder)
+    early_stopping = MinimizeEarlyStopping(epochs, patience=patience, output_dir=output_folder)
 
     optimizer = get_optimizer(model, learning_rate=learning_rate, weight_decay=weight_decay)
     loss_fn = nn.CrossEntropyLoss().cuda()

@@ -54,9 +54,9 @@ if __name__ == '__main__':
     x = valid_dataset[0]
 
     feature_extractor = FeatureExtractor(categorical_features, numerical_features)
-    encoded_inputs = feature_extractor(x)
+    encoded_inputs = feature_extractor(x, 'cuda')
 
-    feature_processor = FeatureProcessor(feature_extractor.vocab_size)
+    feature_processor = FeatureProcessor(feature_extractor.vocab_size).cuda()
     processed_result = feature_processor(**encoded_inputs)
     embeddings = processed_result['embedding']
     attention_masks = processed_result['attention_mask']

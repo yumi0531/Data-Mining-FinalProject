@@ -160,7 +160,7 @@ if __name__ == '__main__':
     print('════════════════════════════════════════')
 
     feature_extractor = FeatureExtractor(categorical_features, numerical_features, binary_features)
-    encoded_inputs = feature_extractor(x)
+    encoded_inputs = feature_extractor(x, 'cuda')
     print('┌──────────────────┐')
     print('│ FeatureExtractor │')
     print('└──────────────────┘')
