@@ -1,0 +1,10 @@
+output_folder: checkpoint
+
+train:
+  batch_size: 256
+  epochs: 1000
+  patience: 50
+  dropout: 0.4
+  learning_rate: 0.001
+  weight_decay: 0
+  use_CLIP: false

@@ -7,6 +7,7 @@ from tqdm.rich import tqdm
 
 warnings.filterwarnings('ignore', category=TqdmExperimentalWarning)
 
+
 def train_epoch(model, loader, epoch, loss_fn, optimizer):
     model.train()
 
@@ -27,10 +28,11 @@ def train_epoch(model, loader, epoch, loss_fn, optimizer):
         predicts = logits.detach().cpu().argmax(-1)
         accuracy = accuracy_score(y, predicts)
         accuracies += accuracy * batch_size
-    
+
     avg_loss = losses / len(loader.dataset)
     avg_accuracy = accuracies / len(loader.dataset)
     return avg_loss, avg_accuracy
+
 
 def valid_epoch(model, loader, epoch, loss_fn):
     model.eval()
@@ -55,6 +57,7 @@ def valid_epoch(model, loader, epoch, loss_fn):
     avg_accuracy = accuracies / len(loader.dataset)
     return avg_loss, avg_accuracy
 
+
 if __name__ == '__main__':
     import os
 
@@ -65,21 +68,38 @@ if __name__ == '__main__':
     from model_CLIP import CLIPClassifier
     from optimizer import get_optimizer
     from torch import nn
+    from model import Classifier
+    from omegaconf import OmegaConf
+    from datetime import datetime
 
     torch.manual_seed(42)
+    
+    """ Training Configuration """
+    cfg = OmegaConf.load("training_config.yml")
+    train_batch_size = cfg.train.batch_size
+    valid_batch_size = cfg.train.batch_size
+    
+    output_folder = cfg.output_folder
+    time_stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    output_folder = os.path.join(cfg.output_folder, time_stamp)
+    
+    epochs = cfg.train.epochs
+    patience = cfg.train.patience
+    dropout = cfg.train.dropout
+    learning_rate = cfg.train.learning_rate
+    weight_decay = cfg.train.weight_decay
+    use_CLIP = cfg.train.use_CLIP
+    """"""
 
-    train_batch_size = 256
-    valid_batch_size = 256
-    output_folder = 'checkpoint'
-    epochs = 100
-    patience = 10
-    dropout = 0
-    learning_rate = 1e-4
-    weight_decay = 0
 
-    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
+    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data(
+        '../playground-series-s5e6/train.csv')
 
-    model = CLIPClassifier(categorical_features, numerical_features, num_class=7, hidden_dropout_prob=dropout).cuda()
+    if use_CLIP:
+        model = CLIPClassifier(categorical_features, numerical_features, num_class=7, hidden_dropout_prob=dropout).cuda()
+    else:
+        model = Classifier(categorical_features,numerical_features,num_class=7,hidden_dropout_prob=dropout).cuda()
+
 
     # use only the first and last 500 rows for fast testing
     # x, y = valid_dataset
@@ -95,14 +115,27 @@ if __name__ == '__main__':
     valid_loader = get_loader(valid_dataset, batch_size=valid_batch_size, shuffle=False)
 
     os.makedirs(output_folder, exist_ok=True)
+    
+    log_path = os.path.join(output_folder, "summary.txt")
+
+    # record timestamp & config 
+    with open(log_path, 'w') as f:
+        f.write(f"Training Summary - {time_stamp}\n")
+        f.write("\n")
+        f.write("=" * 10 + "Training Parameter" + "=" * 10 + "\n")
+        f.write(OmegaConf.to_yaml(cfg))
+
 
     early_stopping = MinimizeEarlyStopping(epochs, patience=patience, output_dir=output_folder)
 
-    optimizer = get_optimizer(model, learning_rate=learning_rate, weight_decay=weight_decay)
+    optimizer = get_optimizer(model,
+                              learning_rate=learning_rate,
+                              weight_decay=weight_decay)
     loss_fn = nn.CrossEntropyLoss().cuda()
 
     train_losses = []
     valid_losses = []
+    best_record = None
 
     # for epoch in range(1, epochs + 1):
     for epoch in early_stopping:
@@ -116,7 +149,17 @@ if __name__ == '__main__':
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
 
-        early_stopping.update(model, valid_loss)
+        early_stopping.update(model, valid_loss, epoch=epoch)
+        
+        # record the best model info to txt file
+        if early_stopping.best_epoch == epoch:
+            best_record = {
+                'epoch': epoch,
+                'train_loss': train_loss,
+                'train_acc': train_accuracy,
+                'val_loss': valid_loss,
+                'val_acc': valid_accuracy,
+            }
 
     torch.save(model.state_dict(), f'{output_folder}/final.pt')
     torch.save(optimizer.state_dict(), f'{output_folder}/optimizer.pt')
@@ -128,3 +171,15 @@ if __name__ == '__main__':
     pyplot.ylabel('Loss')
     pyplot.legend()
     pyplot.savefig(f'{output_folder}/loss.png')
+    
+    if best_record:
+        with open(log_path, 'a') as f:
+            f.write("\n")
+            f.write("=" * 10 + "Best Epoch Summary" + "=" * 10 + "\n")
+            f.write(f"Best Epoch: {best_record['epoch']:03d}\n")
+            
+            f.write(f"Train Loss: {best_record['train_loss']:.4f}, "
+                    f"Train Acc: {best_record['train_acc']:.2f}%\n")
+            
+            f.write(f"Val   Loss: {best_record['val_loss']:.4f}, "
+                    f"Val   Acc: {best_record['val_acc']:.2f}%\n")
