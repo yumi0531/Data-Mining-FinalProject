@@ -59,13 +59,20 @@ if __name__ == '__main__':
     from dataset import get_loader
     from load_data import load_data
     from model_CLIP import CLIPClassifier
+    from model import Classifier
     from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
     torch.manual_seed(42)
 
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
+    
+    """
+    Changing the model to CLIPClassifier or Classifier.
+    """
+    # model = CLIPClassifier(categorical_features, numerical_features, num_class=7).cuda()
+    model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
+    
 
-    model = CLIPClassifier(categorical_features, numerical_features, num_class=7).cuda()
     state_dict = torch.load('checkpoint/best.pt', weights_only=True)
     model.load_state_dict(state_dict)
 
