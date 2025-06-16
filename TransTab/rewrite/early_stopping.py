@@ -10,12 +10,16 @@ class EarlyStopping:
         self.counter = 0
         self.early_stop = False
         self.best_score = best_score
+        self.best_epoch = 0
+        
     def condition(self, score):
         return False
-    def update(self, model, score):
+    def update(self, model, score, epoch=None):
         if self.condition(score):
             self.best_score = score
             self.counter = 0
+            if epoch is not None:
+                self.best_epoch = epoch
             torch.save(model.state_dict(), f'{self.path}/best.pt')
         else:
             self.counter += 1
