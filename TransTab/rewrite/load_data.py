@@ -1,6 +1,7 @@
 import pandas
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+import numpy as np
 
 def load_data(filename, scaler=None, seed=42):
     data = pandas.read_csv(filename)
@@ -18,15 +19,36 @@ def load_data(filename, scaler=None, seed=42):
     y = data['Fertilizer Name']
     x = data.drop(columns=['id', 'Fertilizer Name'])
 
-    num_features = ['Temperature', 'Humidity', 'Moisture', 'Nitrogen', 'Potassium', 'Phosphorous']
-    cat_features = ['Soil Type', 'Crop Type']
-
+    
     train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.2, random_state=seed, shuffle=True, stratify=y)
     valid_size = len(y) // 10
     valid_x = train_x.iloc[-valid_size:]
     valid_y = train_y[-valid_size:]
     train_x = train_x.iloc[:-valid_size]
     train_y = train_y[:-valid_size]
+    
+    # # === Add interaction features ===
+    # x = add_interaction_features(x)
+    # train_x = add_interaction_features(train_x)
+    # valid_x = add_interaction_features(valid_x)
+    # test_x = add_interaction_features(test_x)
+    
+    # interaction_features = [
+    #     'NPK_Total', 'Moisture_Adjusted_N', 'Temp_Humidity_Index', 'log_Potassium',
+    #     'Phosphorous_Moisture', 'Humidity_Temperature', 'Nitrogen_Squared',
+    #     'NPK_Product', 'Soil_Fertility_Index'
+    # ]
+    
+    # num_features = ['Temperature', 'Humidity', 'Moisture', 'Nitrogen', 'Potassium', 'Phosphorous']
+    # cat_features = ['Soil Type', 'Crop Type']
+
+    # num_features += interaction_features
+    # # =================================
+    
+    
+    num_features = ['Temperature', 'Humidity', 'Moisture', 'Nitrogen', 'Potassium', 'Phosphorous']
+    cat_features = ['Soil Type', 'Crop Type']
+
 
     if scaler is None:
         scaler = MinMaxScaler().fit(train_x[num_features])
@@ -36,6 +58,18 @@ def load_data(filename, scaler=None, seed=42):
     test_x[num_features] = scaler.transform(test_x[num_features])
 
     return (x, y), (train_x, train_y), (valid_x, valid_y), (test_x, test_y), cat_features, num_features, scaler
+
+def add_interaction_features(df):
+    df['NPK_Total'] = df['Nitrogen'] + df['Phosphorous'] + df['Potassium']
+    df['Moisture_Adjusted_N'] = df['Nitrogen'] * df['Moisture']
+    df['Temp_Humidity_Index'] = (df['Temperature'] + df['Humidity']) / 2
+    df['log_Potassium'] = np.log1p(df['Potassium'])
+    df['Phosphorous_Moisture'] = df['Phosphorous'] * df['Moisture']
+    df['Humidity_Temperature'] = df['Humidity'] * df['Temperature']
+    df['Nitrogen_Squared'] = df['Nitrogen'] ** 2
+    df['NPK_Product'] = df['Nitrogen'] * df['Phosphorous'] * df['Potassium']
+    df['Soil_Fertility_Index'] = (df['Nitrogen'] + df['Phosphorous'] + df['Potassium']) / (df['Temperature'] + 1e-6)
+    return df
 
 if __name__ == '__main__':
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
