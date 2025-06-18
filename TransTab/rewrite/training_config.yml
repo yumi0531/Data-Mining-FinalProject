@@ -2,9 +2,12 @@ output_folder: checkpoint
 
 train:
   batch_size: 256
-  epochs: 1000
-  patience: 50
-  dropout: 0.4
-  learning_rate: 0.001
-  weight_decay: 0
-  use_CLIP: false
+  epochs: 500
+  patience: 30
+  dropout: 0.5
+  learning_rate: 0.00001
+  weight_decay: 0.0001
+  use_CLIP: true
+  fast_training_for_test: false
+  dataset: mushroom
+  # dataset: fertilizer
