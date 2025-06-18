@@ -105,36 +105,44 @@ class CLIPClassifier(nn.Module):
             nn.LayerNorm(hidden_dim),
             nn.Linear(hidden_dim, num_class if num_class > 2 else 1)
         )
+        self.num_class = num_class
 
-        # if num_class > 2:
-        #     self.loss_fn = nn.CrossEntropyLoss()
-        # else:
-        #     self.loss_fn = nn.BCEWithLogitsLoss()
+        if num_class > 2:
+            self.loss_fn = nn.CrossEntropyLoss()
+        else:
+            self.loss_fn = nn.BCEWithLogitsLoss()
 
-    def forward(self, x):
+    def forward(self, x, y=None):
         embeddings = self.base_model(x)
         embedding = embeddings[:, 0, :]
         logits = self.classifier(embedding)
-        return logits
+        
+        if y is None:
+            return logits
+        
+        if self.num_class == 2:
+            y_ts = torch.as_tensor(y, dtype=torch.float).to(logits.device)
+            loss = self.loss_fn(logits.flatten(), y_ts)
+        else:
+            y_ts = torch.as_tensor(y, dtype=torch.long).to(logits.device)
+            loss = self.loss_fn(logits, y_ts)
 
-        # if self.num_class == 2:
-        #     y_ts = torch.tensor(y.values).float()
-        #     loss = self.loss_fn(logits.flatten(), y_ts)
-        # else:
-        #     y_ts = torch.tensor(y.values).long()
-        #     loss = self.loss_fn(logits, y_ts)
+        return logits, loss
+    
 
 if __name__ == '__main__':
-    from load_data import load_data
+    from load_data_mush import load_data
 
     torch.manual_seed(42)
 
-    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
+    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../MushroomDataset/secondary_data.csv')
 
     x = valid_dataset[0].head(256)
 
-    model = CLIPClassifier(categorical_features, numerical_features, num_class=7).cuda()
-
+    # === Try half nhead, hidden_dim, ffn_dim ===
+    # model = CLIPClassifier(categorical_features, numerical_features, num_class=7).cuda()
+    model = CLIPClassifier(categorical_features=categorical_features, numerical_features=numerical_features, num_attention_head=4, hidden_dim=64, ffn_dim=128, num_class=2).cuda()
+    # ======== 
     with torch.no_grad():
         predict = model(x)
     print(f'{tuple(x.shape)} --{model.__class__.__name__}-> {tuple(predict.shape)}')
