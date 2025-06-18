@@ -13,9 +13,9 @@ class CLIPFeatureExtractor:
                  binary_features=[]):
         # CLIP tokenizer & text encoder
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            "openai/clip-vit-base-patch32")
+            "./clip-vit-base-patch32")
         self.text_encoder = CLIPTextModel.from_pretrained(
-            "openai/clip-vit-base-patch32").eval()
+            "./clip-vit-base-patch32").eval()
 
         self.categorical_features = categorical_features
         self.numerical_features = numerical_features
@@ -57,16 +57,16 @@ class CLIPFeatureExtractor:
 
 
 if __name__ == '__main__':
-    from load_data import load_data
-
+    from load_data_mush import load_data
+    # from load_data import load_data
     torch.manual_seed(42)
 
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data(
-        '../playground-series-s5e6/train.csv')
+        '../MushroomDataset/secondary_data.csv')
 
     x = valid_dataset[0]
-    x['High'] = (x['Temperature'] > 0.5).astype(int)
-    binary_features = ['High']
+    # x['High'] = (x['Temperature'] > 0.5).astype(int)
+    binary_features = []
     feature_extractor = CLIPFeatureExtractor(categorical_features,
                                              numerical_features,
                                              binary_features)
