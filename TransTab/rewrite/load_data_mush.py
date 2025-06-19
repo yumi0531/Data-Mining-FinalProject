@@ -78,16 +78,21 @@ CATEGORY_MAPPINGS = {
 }
 
 
-def load_data(filename, scaler=None, seed=42):
+def load_data(filename, scaler=None, seed=42, missing_rate=0.5):
     data = pd.read_csv(filename, sep=';')
     
-    # Replace missing values with 'unknown'
-    data = data.fillna('unknown')
-
     # Map class label: 'e' → 1, 'p' → 0
     data['class'] = data['class'].map({'e': 1, 'p': 0})
     y = data['class']
     x = data.drop(columns=['class'])
+
+    # random missing value
+    np.random.seed(seed)
+    mask = np.random.uniform(0, 1, (len(x), len(x.columns))) < missing_rate
+    x[mask] = np.nan
+
+    # Replace missing values with 'unknown'
+    data = data.fillna('unknown')
 
     # Identify numerical and categorical features
     num_features = ['cap-diameter', 'stem-height', 'stem-width']

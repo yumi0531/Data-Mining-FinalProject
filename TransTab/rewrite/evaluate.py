@@ -72,8 +72,9 @@ if __name__ == '__main__':
     # model = CLIPClassifier(categorical_features, numerical_features, num_class=7).cuda()
     model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
     
+    output_folder = 'checkpoint'
 
-    state_dict = torch.load('checkpoint/best.pt', weights_only=True)
+    state_dict = torch.load(f'{output_folder}/best.pt', weights_only=True)
     model.load_state_dict(state_dict)
 
     loader = get_loader(valid_dataset, batch_size=256, shuffle=False)
@@ -97,4 +98,4 @@ if __name__ == '__main__':
     print('└───────────┴────────┘')
 
     labels = ['10-26-26', '14-35-14', '17-17-17', '20-20', '28-28', 'DAP', 'Urea']
-    plot_confusion_matrix(ys, predicts, labels)
+    plot_confusion_matrix(ys, predicts, labels, output_folder)

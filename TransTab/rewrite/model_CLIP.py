@@ -103,14 +103,16 @@ class CLIPClassifier(nn.Module):
         self.base_model = BaseModel(categorical_features, numerical_features, binary_features, hidden_dim, num_layer, num_attention_head, hidden_dropout_prob, ffn_dim)
         self.classifier = nn.Sequential(
             nn.LayerNorm(hidden_dim),
-            nn.Linear(hidden_dim, num_class if num_class > 2 else 1)
+            nn.Linear(hidden_dim, 2)
+            # nn.Linear(hidden_dim, num_class if num_class > 2 else 1)
         )
         self.num_class = num_class
 
-        if num_class > 2:
-            self.loss_fn = nn.CrossEntropyLoss()
-        else:
-            self.loss_fn = nn.BCEWithLogitsLoss()
+        self.loss_fn = nn.CrossEntropyLoss()
+        # if num_class > 2:
+        #     self.loss_fn = nn.CrossEntropyLoss()
+        # else:
+        #     self.loss_fn = nn.BCEWithLogitsLoss()
 
     def forward(self, x, y=None):
         embeddings = self.base_model(x)
@@ -120,12 +122,14 @@ class CLIPClassifier(nn.Module):
         if y is None:
             return logits
         
-        if self.num_class == 2:
-            y_ts = torch.as_tensor(y, dtype=torch.float).to(logits.device)
-            loss = self.loss_fn(logits.flatten(), y_ts)
-        else:
-            y_ts = torch.as_tensor(y, dtype=torch.long).to(logits.device)
-            loss = self.loss_fn(logits, y_ts)
+        y_ts = y.to(logits.device)
+        loss = self.loss_fn(logits, y_ts)
+        # if self.num_class == 2:
+        #     y_ts = torch.as_tensor(y, dtype=torch.float).to(logits.device)
+        #     loss = self.loss_fn(logits.flatten(), y_ts)
+        # else:
+        #     y_ts = torch.as_tensor(y, dtype=torch.long).to(logits.device)
+        #     loss = self.loss_fn(logits, y_ts)
 
         return logits, loss
     
