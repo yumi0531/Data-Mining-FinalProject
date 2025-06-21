@@ -3,11 +3,9 @@ from torch import nn
 
 
 class CLIPFeatureProcessor(nn.Module):
-
     def __init__(self, input_dim=512, output_dim=128):
         super().__init__()
-        self.projector = nn.Sequential(nn.LayerNorm(input_dim),
-                                       nn.Linear(input_dim, output_dim))
+        self.projector = nn.Linear(input_dim, output_dim)
 
     def forward(self, embedding):
         return self.projector(embedding)

@@ -103,7 +103,7 @@ class CLIPClassifier(nn.Module):
         self.base_model = BaseModel(categorical_features, numerical_features, binary_features, hidden_dim, num_layer, num_attention_head, hidden_dropout_prob, ffn_dim)
         self.classifier = nn.Sequential(
             nn.LayerNorm(hidden_dim),
-            nn.Linear(hidden_dim, 2)
+            nn.Linear(hidden_dim, num_class)
             # nn.Linear(hidden_dim, num_class if num_class > 2 else 1)
         )
         self.num_class = num_class

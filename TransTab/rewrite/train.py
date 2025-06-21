@@ -20,10 +20,9 @@ def train_epoch(model, loader, epoch, loss_fn, optimizer):
     for x, y in tqdm(loader, desc=f'Epoch {epoch}'):
         batch_size = len(x)
 
-        # logits = model(x)
-        # loss = loss_fn(logits, y.cuda())
-
-        logits, loss = model(x, y)
+        logits = model(x)
+        loss = loss_fn(logits, y.cuda())
+        # logits, loss = model(x, y)
         
         optimizer.zero_grad()
         loss.backward()
@@ -50,9 +49,9 @@ def valid_epoch(model, loader, epoch, loss_fn):
         batch_size = len(x)
 
         with torch.no_grad():
-            # logits = model(x)
-            # loss = loss_fn(logits, y.cuda())
-            logits, loss = model(x, y)
+            logits = model(x)
+            loss = loss_fn(logits, y.cuda())
+            # logits, loss = model(x, y)
             
         losses += loss.item() * batch_size
         predicts = logits.cpu().argmax(-1)
@@ -155,6 +154,7 @@ if __name__ == '__main__':
     learning_rate = cfg.train.learning_rate
     weight_decay = cfg.train.weight_decay
     use_CLIP = cfg.train.use_CLIP
+    use_nan_embedding = cfg.train.use_NaN_embedding
     fast_testing = cfg.train.fast_training_for_test
     num_class = 7 if cfg.train.dataset == "fertilizer" else 2
     """"""
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     if use_CLIP:
         model = CLIPClassifier(categorical_features, numerical_features, num_class=num_class, hidden_dropout_prob=dropout).cuda()
     else:
-        model = Classifier(categorical_features,numerical_features,num_class=num_class,hidden_dropout_prob=dropout).cuda()
+        model = Classifier(categorical_features,numerical_features,num_class=num_class,hidden_dropout_prob=dropout, use_nan_embedding=use_nan_embedding).cuda()
 
 
     # use only the first and last 500 rows for fast testing
@@ -248,8 +248,8 @@ if __name__ == '__main__':
     pyplot.savefig(f'{output_folder}/loss.png')
     
     # === Save feature importance ===
-    valid_x, _ = valid_dataset
-    explain_feature_importance(model, valid_x, output_folder, log_path=log_path)
+    # valid_x, _ = valid_dataset
+    # explain_feature_importance(model, valid_x, output_folder, log_path=log_path)
     
     # === Save best model info to txt file ===
     if best_record:

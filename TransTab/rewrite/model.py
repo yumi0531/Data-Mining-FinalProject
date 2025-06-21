@@ -2,7 +2,9 @@ import math
 import torch
 
 from feature_extractor import FeatureExtractor
+from feature_extractor_nan import NANFeatureExtractor
 from feature_processor import FeatureProcessor
+from feature_processor_nan import NANFeatureProcessor
 from torch import nn
 
 class GatedTransformerEncoderLayer(nn.Module):
@@ -86,10 +88,12 @@ class CLSToken(nn.Module):
         }
 
 class BaseModel(nn.Module):
-    def __init__(self, categorical_features=None, numerical_features=None, binary_features=None, hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0.1, ffn_dim=256):
+    def __init__(self, categorical_features=None, numerical_features=None, binary_features=None, hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0.1, ffn_dim=256, use_nan_embedding=False):
         super().__init__()
-        self.feature_extractor = FeatureExtractor(categorical_features, numerical_features, binary_features)
-        self.feature_processor = FeatureProcessor(self.feature_extractor.vocab_size, hidden_dim, self.feature_extractor.pad_token_id, hidden_dropout_prob)
+        Extractor = NANFeatureExtractor if use_nan_embedding else FeatureExtractor
+        Processor = NANFeatureProcessor if use_nan_embedding else FeatureProcessor
+        self.feature_extractor = Extractor(categorical_features, numerical_features, binary_features)
+        self.feature_processor = Processor(self.feature_extractor.vocab_size, hidden_dim, self.feature_extractor.pad_token_id, hidden_dropout_prob)
 
         self.cls_token = CLSToken(hidden_dim=hidden_dim)
         self.encoder = GatedTransformerEncoder(hidden_dim, num_layer, num_attention_head, hidden_dropout_prob, ffn_dim)
@@ -103,12 +107,12 @@ class BaseModel(nn.Module):
         return embedding
 
 class Classifier(nn.Module):
-    def __init__(self, categorical_features, numerical_features, binary_features=[], num_class=2, hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0, ffn_dim=256):
+    def __init__(self, categorical_features, numerical_features, binary_features=[], num_class=2, hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0, ffn_dim=256, use_nan_embedding=False):
         super().__init__()
-        self.base_model = BaseModel(categorical_features, numerical_features, binary_features, hidden_dim, num_layer, num_attention_head, hidden_dropout_prob, ffn_dim)
+        self.base_model = BaseModel(categorical_features, numerical_features, binary_features, hidden_dim, num_layer, num_attention_head, hidden_dropout_prob, ffn_dim, use_nan_embedding)
         self.classifier = nn.Sequential(
             nn.LayerNorm(hidden_dim),
-            nn.Linear(hidden_dim, num_class if num_class > 2 else 1)
+            nn.Linear(hidden_dim, num_class)
         )
 
         # if num_class > 2:
@@ -130,15 +134,15 @@ class Classifier(nn.Module):
         #     loss = self.loss_fn(logits, y_ts)
 
 if __name__ == '__main__':
-    from load_data import load_data
+    from load_data_mush import load_data
 
     torch.manual_seed(42)
 
-    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
+    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../MushroomDataset/secondary_data.csv')
 
     x = valid_dataset[0]
 
-    model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
+    model = Classifier(categorical_features, numerical_features, num_class=2, use_nan_embedding=True).cuda()
 
     with torch.no_grad():
         predict = model(x)

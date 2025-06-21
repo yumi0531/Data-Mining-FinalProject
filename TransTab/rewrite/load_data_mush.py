@@ -91,9 +91,6 @@ def load_data(filename, scaler=None, seed=42, missing_rate=0.5):
     mask = np.random.uniform(0, 1, (len(x), len(x.columns))) < missing_rate
     x[mask] = np.nan
 
-    # Replace missing values with 'unknown'
-    data = data.fillna('unknown')
-
     # Identify numerical and categorical features
     num_features = ['cap-diameter', 'stem-height', 'stem-width']
     cat_features = [col for col in x.columns if col not in num_features]
@@ -101,7 +98,7 @@ def load_data(filename, scaler=None, seed=42, missing_rate=0.5):
     # Replace categorical codes with CLIP-friendly text
     for col in cat_features:
         mapping = CATEGORY_MAPPINGS.get(col, {})
-        x[col] = x[col].map(lambda v: mapping.get(v, v) if pd.notnull(v) else 'missing')
+        x[col] = x[col].map(lambda v: mapping.get(v, v))
 
     # Split dataset
     train_x, test_x, train_y, test_y = train_test_split(

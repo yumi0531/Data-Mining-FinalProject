@@ -64,24 +64,28 @@ if __name__ == '__main__':
 
     torch.manual_seed(42)
 
-    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../playground-series-s5e6/train.csv')
-    
-    """
-    Changing the model to CLIPClassifier or Classifier.
-    """
-    # model = CLIPClassifier(categorical_features, numerical_features, num_class=7).cuda()
-    model = Classifier(categorical_features, numerical_features, num_class=7).cuda()
-    
+    use_CLIP = False
+    use_nan_embedding = False
     output_folder = 'checkpoint'
+    use_mushroom = True
 
+    dataset_path = '../MushroomDataset/secondary_data.csv' if use_mushroom else '../playground-series-s5e6'
+    dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data(dataset_path)
+
+    if use_CLIP:
+        model = CLIPClassifier(categorical_features, numerical_features, num_class=2).cuda()
+    else:
+        model = Classifier(categorical_features, numerical_features, num_class=2, use_nan_embedding=use_nan_embedding).cuda()
+    
     state_dict = torch.load(f'{output_folder}/best.pt', weights_only=True)
     model.load_state_dict(state_dict)
 
-    loader = get_loader(valid_dataset, batch_size=256, shuffle=False)
+    loader = get_loader(test_dataset, batch_size=256, shuffle=False)
 
     ys, predicts = evaluate(model, loader)
 
-    map_3 = map_k(ys, predicts)
+    if not use_mushroom:
+        map_3 = map_k(ys, predicts)
 
     predicts = predicts.cpu().argmax(-1)
     accuracy = accuracy_score(ys, predicts)
@@ -89,13 +93,17 @@ if __name__ == '__main__':
     recall = recall_score(ys, predicts, average='macro')
     f1 = f1_score(ys, predicts, average='macro')
     print('┌───────────┬────────┐')
-    print(f'│ MAP@3     │ {map_3*100:5.2f}% │')
-    print('├───────────┼────────┤')
+    if not use_mushroom:
+        print(f'│ MAP@3     │ {map_3*100:5.2f}% │')
+        print('├───────────┼────────┤')
     print(f'│ Accuracy  │ {accuracy*100:5.2f}% │')
     print(f'│ Precision │ {precision*100:5.2f}% │')
     print(f'│ Recall    │ {recall*100:5.2f}% │')
     print(f'│ F1 Score  │ {f1*100:5.2f}% │')
     print('└───────────┴────────┘')
 
-    labels = ['10-26-26', '14-35-14', '17-17-17', '20-20', '28-28', 'DAP', 'Urea']
+    if use_mushroom:
+        labels = ['p', 'e']
+    else:
+        labels = ['10-26-26', '14-35-14', '17-17-17', '20-20', '28-28', 'DAP', 'Urea']
     plot_confusion_matrix(ys, predicts, labels, output_folder)
