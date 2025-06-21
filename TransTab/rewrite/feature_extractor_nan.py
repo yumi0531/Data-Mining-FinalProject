@@ -18,14 +18,14 @@ class NANFeatureExtractor:
 
         if len(self.categorical_features) > 0:
             x_cat = x[self.categorical_features]
-            x_cat = x_cat.fillna('')
+            x_cat = x_cat.fillna(self.tokenizer.mask_token)
             x_cat = x_cat.astype(str)
             x[self.categorical_features] = x_cat
 
         if len(self.numerical_features) > 0:
             x_num = x[self.numerical_features]
-            x_num = x_num.fillna(0)
             x_num = x_num.round(2)
+            x_num = x_num.fillna(self.tokenizer.mask_token)
             x_num = x_num.astype(str)
             x[self.numerical_features] = x_num
         
