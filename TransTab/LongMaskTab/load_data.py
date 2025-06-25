@@ -1,7 +1,9 @@
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+import numpy
+import pandas
+
 from sklearn.model_selection import train_test_split
-import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
 # Define mappings for categorical values
 CATEGORY_MAPPINGS = {
     'cap-shape': {
@@ -79,7 +81,7 @@ CATEGORY_MAPPINGS = {
 
 
 def load_data(filename, scaler=None, seed=42, missing_rate=0.5):
-    data = pd.read_csv(filename, sep=';')
+    data = pandas.read_csv(filename, sep=';')
     
     # Map class label: 'e' → 1, 'p' → 0
     data['class'] = data['class'].map({'e': 1, 'p': 0})
@@ -87,9 +89,9 @@ def load_data(filename, scaler=None, seed=42, missing_rate=0.5):
     x = data.drop(columns=['class'])
 
     # random missing value
-    np.random.seed(seed)
-    mask = np.random.uniform(0, 1, (len(x), len(x.columns))) < missing_rate
-    x[mask] = np.nan
+    numpy.random.seed(seed)
+    mask = numpy.random.uniform(0, 1, (len(x), len(x.columns))) < missing_rate
+    x[mask] = numpy.nan
 
     # Identify numerical and categorical features
     num_features = ['cap-diameter', 'stem-height', 'stem-width']

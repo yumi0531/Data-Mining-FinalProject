@@ -47,14 +47,14 @@ def plot_confusion_matrix(ys, predicts, labels, output_folder='checkpoint'):
 if __name__ == '__main__':
     from dataset import get_loader
     from load_data import load_data
-    from model_CLIP import CLIPClassifier
     from model import Classifier
+    from model_CLIP import CLIPClassifier
     from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
     torch.manual_seed(42)
 
-    use_CLIP = False
-    use_nan_embedding = False
+    use_CLIP = True
+    use_nan_embedding = True
     output_folder = 'checkpoint'
 
     dataset_path = '../MushroomDataset/secondary_data.csv'

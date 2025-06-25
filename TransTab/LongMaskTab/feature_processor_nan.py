@@ -1,5 +1,3 @@
-import torch
-
 from embedding import WordEmbedding
 from torch import nn
 
@@ -20,8 +18,10 @@ class NANFeatureProcessor(nn.Module):
         }
 
 if __name__ == '__main__':
+    import torch
+
     from feature_extractor_nan import NANFeatureExtractor
-    from load_data_mush import load_data
+    from load_data import load_data
 
     torch.manual_seed(42)
 

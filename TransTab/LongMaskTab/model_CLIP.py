@@ -1,7 +1,7 @@
 import math
 import torch
 
-from feature_extractor_CLIP_nan import NAN_CLIPFeatureExtractor
+from feature_extractor_CLIP import CLIPFeatureExtractor
 from feature_processor_CLIP import CLIPFeatureProcessor
 from torch import nn
 
@@ -88,7 +88,7 @@ class CLSToken(nn.Module):
 class BaseModel(nn.Module):
     def __init__(self, categorical_features=None, numerical_features=None, binary_features=None, hidden_dim=128, num_layer=2, num_attention_head=8, hidden_dropout_prob=0.1, ffn_dim=256):
         super().__init__()
-        self.feature_extractor = NAN_CLIPFeatureExtractor(categorical_features, numerical_features, binary_features)
+        self.feature_extractor = CLIPFeatureExtractor(categorical_features, numerical_features, binary_features)
         self.feature_processor = CLIPFeatureProcessor(768, hidden_dim)
 
         self.cls_token = CLSToken(hidden_dim=hidden_dim)
@@ -98,7 +98,6 @@ class BaseModel(nn.Module):
         device = next(self.parameters()).device
         embeddings = self.feature_extractor(x, device)
         embedding = self.feature_processor(embeddings['embedding'])
-        # embedding = embedding.unsqueeze(1)
         embedding = self.cls_token(embedding, embeddings['attention_mask'])
         embedding = self.encoder(**embedding)
         return embedding
@@ -112,7 +111,7 @@ class CLIPClassifier(nn.Module):
             nn.Linear(hidden_dim, num_class)
         )
 
-    def forward(self, x, y=None):
+    def forward(self, x):
         embeddings = self.base_model(x)
         embedding = embeddings[:, 0, :]
         logits = self.classifier(embedding)
@@ -128,10 +127,8 @@ if __name__ == '__main__':
 
     x = valid_dataset[0].head(256)
 
-    # === Try half nhead, hidden_dim, ffn_dim ===
-    # model = CLIPClassifier(categorical_features, numerical_features, num_class=7).cuda()
-    model = CLIPClassifier(categorical_features=categorical_features, numerical_features=numerical_features, num_attention_head=4, hidden_dim=64, ffn_dim=128, num_class=2).cuda()
-    # ======== 
+    model = CLIPClassifier(categorical_features=categorical_features, numerical_features=numerical_features, num_class=2).cuda()
+    
     with torch.no_grad():
         predict = model(x)
     print(f'{tuple(x.shape)} --{model.__class__.__name__}-> {tuple(predict.shape)}')

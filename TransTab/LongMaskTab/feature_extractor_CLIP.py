@@ -1,7 +1,6 @@
 import torch
 
 from transformers import CLIPTokenizer, CLIPTextModel
-from load_data import load_data
 
 class CLIPFeatureExtractor:
     def __init__(self, categorical_features, numerical_features, binary_features=[]):
@@ -40,6 +39,10 @@ class CLIPFeatureExtractor:
         }
 
 if __name__ == '__main__':
+    from load_data import load_data
+
+    torch.manual_seed(42)
+
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../MushroomDataset/secondary_data.csv')
 
     data = valid_dataset[0]
@@ -48,4 +51,11 @@ if __name__ == '__main__':
 
     encoded_inputs = feature_extractor(data.head(256), 'cuda')
 
-    print(encoded_inputs)
+    print('┌──────────────────┐')
+    print('│ FeatureExtractor │')
+    print('└──────────────────┘')
+    print('{')
+    for key, value in encoded_inputs.items():
+        print(f'\'{key}\':')
+        print(f'{value},')
+    print('}')

@@ -33,8 +33,8 @@ class NumEmbedding(nn.Module):
         return feature_embedding * num.unsqueeze(-1).float() + self.bias
 
 if __name__ == '__main__':
-    from feature_extractor import FeatureExtractor
     from load_data import load_data
+    from feature_extractor import FeatureExtractor
 
     torch.manual_seed(42)
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     x = valid_dataset[0]
 
     feature_extractor = FeatureExtractor(categorical_features, numerical_features)
-    encoded_inputs = feature_extractor(x)
+    encoded_inputs = feature_extractor(x, 'cpu')
     cat_input_ids = encoded_inputs['x_cat_input_ids']
 
     word_embedding = WordEmbedding(feature_extractor.vocab_size)

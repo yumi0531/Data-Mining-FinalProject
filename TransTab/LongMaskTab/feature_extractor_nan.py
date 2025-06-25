@@ -1,5 +1,3 @@
-import torch
-
 from transformers import BertTokenizerFast
 
 # 將特徵及類別轉換為token
@@ -45,6 +43,8 @@ class NANFeatureExtractor:
         }
 
 if __name__ == '__main__':
+    import torch
+
     from load_data import load_data
 
     torch.manual_seed(42)

@@ -4,8 +4,6 @@ import warnings
 from sklearn.metrics import accuracy_score
 from tqdm import TqdmExperimentalWarning
 from tqdm.rich import tqdm
-import pandas as pd
-import matplotlib.pyplot as plt
 
 warnings.filterwarnings('ignore', category=TqdmExperimentalWarning)
 
@@ -64,15 +62,15 @@ if __name__ == '__main__':
     import os
 
     from dataset import get_loader
+    from datetime import datetime
     from early_stopping import MinimizeEarlyStopping
     from load_data import load_data
     from matplotlib import pyplot
+    from model import Classifier
     from model_CLIP import CLIPClassifier
+    from omegaconf import OmegaConf
     from optimizer import get_optimizer
     from torch import nn
-    from model import Classifier
-    from omegaconf import OmegaConf
-    from datetime import datetime
 
     torch.manual_seed(42)
     
@@ -104,9 +102,9 @@ if __name__ == '__main__':
         load_data_path)
 
     if use_CLIP:
-        model = CLIPClassifier(categorical_features, numerical_features, num_class=num_class, hidden_dropout_prob=dropout).cuda()
+        model = CLIPClassifier(categorical_features, numerical_features, num_class=2, hidden_dropout_prob=dropout).cuda()
     else:
-        model = Classifier(categorical_features,numerical_features,num_class=num_class,hidden_dropout_prob=dropout, use_nan_embedding=use_nan_embedding).cuda()
+        model = Classifier(categorical_features,numerical_features,num_class=2,hidden_dropout_prob=dropout, use_nan_embedding=use_nan_embedding).cuda()
 
 
     # use only the first and last 500 rows for fast testing

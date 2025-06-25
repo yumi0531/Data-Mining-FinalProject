@@ -1,6 +1,4 @@
-import torch
 from torch import nn
-
 
 class CLIPFeatureProcessor(nn.Module):
     def __init__(self, input_dim=512, output_dim=128):
@@ -12,6 +10,8 @@ class CLIPFeatureProcessor(nn.Module):
 
 
 if __name__ == '__main__':
+    import torch
+
     from feature_extractor_CLIP import CLIPFeatureExtractor
     from load_data import load_data
 
@@ -26,8 +26,8 @@ if __name__ == '__main__':
                                              numerical_features)
     encoded_inputs = feature_extractor(x.head(256), 'cuda')
 
-    processor = CLIPFeatureProcessor().cuda()
-    embeddings = processor(encoded_inputs)
+    processor = CLIPFeatureProcessor(768).cuda()
+    embeddings = processor(encoded_inputs['embedding'])
 
     print('┌────────────┐')
     print('│ embeddings │')

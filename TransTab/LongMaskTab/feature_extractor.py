@@ -57,7 +57,6 @@ if __name__ == '__main__':
     torch.manual_seed(42)
 
     dataset, train_dataset, valid_dataset, test_dataset, categorical_features, numerical_features, scaler = load_data('../MushroomDataset/secondary_data.csv')
-    binary_features = []
 
     tokenizer = BertTokenizerFast.from_pretrained('../transtab/tokenizer')
 
@@ -123,42 +122,7 @@ if __name__ == '__main__':
 
     print('════════════════════════════════════════')
 
-    x_bin = x[binary_features]
-    x_bin_str = x_bin.apply(lambda x: x.name) * x_bin
-    x_bin_str = x_bin_str.agg(' '.join, axis=1)
-    
-    print('┌───────────┐')
-    print('│ x_bin_str │')
-    print('└───────────┘')
-    print(x_bin_str)
-
-    x_bin_str = x_bin_str.values.tolist()
-    x_bin_ts = tokenizer(x_bin_str, padding=True, truncation=True, add_special_tokens=False, return_tensors='pt')
-    
-    print()
-    print('┌─────────────────┐')
-    print('│ x_bin_input_ids │')
-    print('└─────────────────┘')
-    print(x_bin_ts['input_ids'])
-    print(f'shape: {tuple(x_bin_ts["input_ids"].shape)}')
-
-    print()
-    print('┌──────────────────────────────────────────────┐')
-    print('│ tokenizer.decode(x_bin_input_ids=False/True) │')
-    print('└──────────────────────────────────────────────┘')
-    print(f'False: {tokenizer.decode(x_bin_ts["input_ids"][0])}')
-    print(f'True: {tokenizer.decode(x_bin_ts["input_ids"][1])}')
-
-    print()
-    print('┌──────────────┐')
-    print('│ cat_att_mask │')
-    print('└──────────────┘')
-    print(x_bin_ts['attention_mask'])
-    print(f'shape: {tuple(x_bin_ts["attention_mask"].shape)}')
-
-    print('════════════════════════════════════════')
-
-    feature_extractor = FeatureExtractor(categorical_features, numerical_features, binary_features)
+    feature_extractor = FeatureExtractor(categorical_features, numerical_features)
     encoded_inputs = feature_extractor(x, 'cuda')
     print('┌──────────────────┐')
     print('│ FeatureExtractor │')
