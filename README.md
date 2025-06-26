@@ -1,6 +1,7 @@
 # LongMaskTab
 
-**Modeling Missing Values and Long Feature Interactions in Tabular Transformers**
+**Modeling Missing Values and Long Feature Interactions in Tabular Transformers**  
+[Team_9 Final Report (PDF)](https://github.com/user-attachments/files/20918235/Team_9.pdf)
 
 ## Overview
 
