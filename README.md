@@ -25,13 +25,13 @@ tree-based imputation methods.
 
 
 ## Project Structure
-LongMaskTab/
-├── feature_extractor_CLIP.py      # CLIP-based tokenization for tabular data & Masking logic for missing values
-├── feature_processor_CLIP.py      
-├── train.py                       # Training script
-├── evaluate.py                    # Evaluation script
-├── model_CLIP.py                  # Transformer model architecture 
-├── training_config.yml            # Configurable parameters
+LongMaskTab/  
+├── feature_extractor_CLIP.py      # CLIP-based tokenization for tabular data & Masking logic for missing values  
+├── feature_processor_CLIP.py        
+├── train.py                       # Training script  
+├── evaluate.py                    # Evaluation script  
+├── model_CLIP.py                  # Transformer model architecture   
+├── training_config.yml            # Configurable parameters   
 
 
 
