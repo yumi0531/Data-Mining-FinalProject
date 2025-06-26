@@ -50,10 +50,14 @@ Missing values were randomly introduced up to 50% for robustness testing.
 ## Getting Started
 
 
-### 1. Install Dependencies
+### 1. Install Dependencies & Dataset
+Download the [Secondary Mushroom Dataset](https://archive.ics.uci.edu/dataset/848/secondary+mushroom+dataset) and place the extracted CSV file in the same directory level as the `LongMaskTab` folder.
+
 ```bash
 pip install -r requirements.txt
 ```
+
+
 ### 2. Train model
 edit model hyperparamter on "training_config.yml" file.
 ```bash
